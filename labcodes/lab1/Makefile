@@ -1,8 +1,11 @@
+# [scc] :=表示由当前数值决定，后面如果右侧改变，左侧不变
+# [scc] =表示和右侧相同的内容，右侧改变，左侧也跟着变
 PROJ	:= challenge
 EMPTY	:=
 SPACE	:= $(EMPTY) $(EMPTY)
 SLASH	:= /
 
+# 用于控制输出的内容是否详细 @指令 该指令不会打印
 V       := @
 #need llvm/cang-3.5+
 #USELLVM := 1
