@@ -94,6 +94,7 @@ TARGETS	:=
 
 include tools/function.mk
 
+# [scc] 调用listtf（在tools/function.mk）中定义
 listf_cc = $(call listf,$(1),$(CTYPE))
 
 # for cc
@@ -184,8 +185,10 @@ $(call create_target_host,sign,sign)
 # -------------------------------------------------------------------
 
 # create ucore.img
+# [scc] 创建img
 UCOREIMG	:= $(call totarget,ucore.img)
 
+# [scc] ucore.img规则，
 $(UCOREIMG): $(kernel) $(bootblock)
 	$(V)dd if=/dev/zero of=$@ count=10000
 	$(V)dd if=$(bootblock) of=$@ conv=notrunc
