@@ -10,6 +10,9 @@ V       := @
 #need llvm/cang-3.5+
 #USELLVM := 1
 # try to infer the correct GCCPREFX
+# [scc] 找到正确的前缀i386-elf-[objdump]和[objcopy]
+## [scc] 0：是一个文件描述符，表示标准输入(stdin)；1：是一个文件描述符，表示标准输出(stdout)；2：是一个文件描述符，表示标准错误(stderr)
+## [scc] &1：1输出通道；&2：2输出通道
 ifndef GCCPREFIX
 GCCPREFIX := $(shell if i386-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/dev/null 2>&1; \
 	then echo 'i386-elf-'; \
@@ -26,6 +29,7 @@ GCCPREFIX := $(shell if i386-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/dev/nu
 endif
 
 # try to infer the correct QEMU
+## [scc] which：寻找文件夹，which qemu-system-i386返回/usr/bin/qemu-system-i386
 ifndef QEMU
 QEMU := $(shell if which qemu-system-i386 > /dev/null; \
 	then echo 'qemu-system-i386'; exit; \
@@ -44,6 +48,7 @@ endif
 .SUFFIXES: .c .S .h
 
 # delete target files if there is an error (or make is interrupted)
+## [scc] 如果有错误，删除target files
 .DELETE_ON_ERROR:
 
 # define compiler and flags
