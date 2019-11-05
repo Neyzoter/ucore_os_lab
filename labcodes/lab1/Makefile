@@ -147,6 +147,7 @@ $(call add_files_cc,$(call listf_cc,$(KSRCDIR)),kernel,$(KCFLAGS))
 KOBJS	= $(call read_packet,kernel libs)
 
 # create kernel target
+## totarget：kernel = bin/kernel
 kernel = $(call totarget,kernel)
 
 $(kernel): tools/kernel.ld
@@ -185,10 +186,10 @@ $(call create_target_host,sign,sign)
 # -------------------------------------------------------------------
 
 # create ucore.img
-# [scc] 创建img
+# [scc] 创建img   UCOREIMG := bin/ucore.img
 UCOREIMG	:= $(call totarget,ucore.img)
 
-# [scc] ucore.img规则，
+# [scc] ucore.img规则
 $(UCOREIMG): $(kernel) $(bootblock)
 	$(V)dd if=/dev/zero of=$@ count=10000
 	$(V)dd if=$(bootblock) of=$@ conv=notrunc
