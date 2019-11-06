@@ -87,5 +87,29 @@ BIOS将Bootloader搬运到了`0x7c00`，程序再从此地址开始运行。
 **BIOS将通过读取硬盘主引导扇区到内存,并转跳到对应内存中的位置执行bootloader。请分析bootloader是如何完成从实模式进入保护模式的。**
 
 * 为何开启A20,以及如何开启A20
+
+  寻址寄存器`segent:offset<(0xffff左移4位+0xffff)=1088KB`，最多可访问1088KB空间，比1MB大了一些。为了保持向下兼容，需要设置第20位（A20）地址一直为0，这样才能实现不超过1MB。在进入保护模式后，需要使用这一位（A20），又要打开使能这一位。
+
+  http://hengch.blog.163.com/blog/static/107800672009013104623747/
+
 * 如何初始化GDT表
+
+  初始化GDT表：一个简单的GDT表和其描述符已经静态储存在引导区（asm.h）中，载入即可
+
+  ```assembly
+  lgdt gdtdesc
+  ```
+
+  
+
 * 如何使能和进入保护模式
+
+  控制寄存器cr0的第0位PE置1，可以开启保护模式。
+
+  ```assembly
+  movl %cr0, %eax             # cr0 ： 控制寄存器0
+  orl $CR0_PE_ON, %eax        # CR0_PE_ON = 0x01，和cr0的数值或操作，即第0位（PE：CR0的位0是启用保护（Protection Enable）标志）置1
+  movl %eax, %cr0             # 给cr0赋值，启动保护模式
+  ```
+
+  

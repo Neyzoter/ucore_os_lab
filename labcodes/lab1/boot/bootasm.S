@@ -22,7 +22,7 @@ start:
     movw %ax, %es                                   # -> Extra Segment     设置ES为0
     movw %ax, %ss                                   # -> Stack Segment     设置SS为0
 
-    # Enable A20:
+    #  Enable A20:
     #  For backwards compatibility with the earliest PCs, physical
     #  address line 20 is tied low, so that addresses higher than
     #  1MB wrap around to zero by default. This code undoes this.
@@ -49,9 +49,9 @@ seta20.2:
     # identical to physical addresses, so that the
     # effective memory map does not change during the switch.
     lgdt gdtdesc
-    movl %cr0, %eax
-    orl $CR0_PE_ON, %eax
-    movl %eax, %cr0
+    movl %cr0, %eax             # cr0 ： 控制寄存器0
+    orl $CR0_PE_ON, %eax        # CR0_PE_ON = 0x01，和cr0的数值或操作，即第0位（PE：CR0的位0是启用保护（Protection Enable）标志）置1
+    movl %eax, %cr0             # 给cr0赋值，启动保护模式
 
     # Jump to next instruction, but in 32-bit code segment.
     # Switches processor into 32-bit mode.
@@ -68,9 +68,10 @@ protcseg:
     movw %ax, %ss                                   # -> SS: Stack Segment
 
     # Set up the stack pointer and call into C. The stack region is from 0--start(0x7c00)
-    movl $0x0, %ebp
-    movl $start, %esp
-    call bootmain
+    # 设置boot的堆栈
+    movl $0x0, %ebp            # BP : 基数指针寄存器，通过BP来寻找堆栈里数据或者地址
+    movl $start, %esp          # SP : 堆叠指标暂存器，存放栈的偏移地址，指向栈顶
+    call bootmain              # 进入主方法，开始加载ELF格式的OS
 
     # If bootmain returns (it shouldn't), loop.
 spin:
@@ -84,5 +85,5 @@ gdt:
     SEG_ASM(STA_W, 0x0, 0xffffffff)                 # data seg for bootloader and kernel
 
 gdtdesc:
-    .word 0x17                                      # sizeof(gdt) - 1
-    .long gdt                                       # address gdt
+    .word 0x17                                      # sizeof(gdt) - 1  
+    .long gdt                                       # address gdt      gdt的地址
