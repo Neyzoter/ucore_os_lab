@@ -14,24 +14,26 @@
 start:
 .code16                                             # Assemble for 16-bit mode
     cli                                             # Disable interrupts
-    cld                                             # String operations increment
+    cld                                             # String operations increment 清除方向标志使字符串指针   每次字符串操作后自动递增
 
     # Set up the important data segment registers (DS, ES, SS).
-    xorw %ax, %ax                                   # Segment number zero
-    movw %ax, %ds                                   # -> Data Segment
-    movw %ax, %es                                   # -> Extra Segment
-    movw %ax, %ss                                   # -> Stack Segment
+    xorw %ax, %ax                                   # Segment number zero  AX寄存器异或得到0
+    movw %ax, %ds                                   # -> Data Segment      设置DS为0，其中会包含16位段选择子Segment Selector，用于结合GDTR来索引段描述符表内的段描述符
+    movw %ax, %es                                   # -> Extra Segment     设置ES为0
+    movw %ax, %ss                                   # -> Stack Segment     设置SS为0
 
     # Enable A20:
     #  For backwards compatibility with the earliest PCs, physical
     #  address line 20 is tied low, so that addresses higher than
     #  1MB wrap around to zero by default. This code undoes this.
-seta20.1:
-    inb $0x64, %al                                  # Wait for not busy(8042 input buffer empty).
-    testb $0x2, %al
-    jnz seta20.1
+    #  如果一条汇编语句中引用的是常量而不是内存地址， 必须在数据前加一个美元符号$以示区别， 否则的话表示的是一个内存单元的数据，而不是地址本身。
+    #  引用一个寄存器时，前面要加一个百分号%.
+seta20.1:                                           # Wait for not busy(8042 input buffer empty). 等待8042键盘控制器不忙
+    inb $0x64, %al                                  # inb = in Byte 端口操作，从端口读取数据
+    testb $0x2, %al                                 # 是否相等，不相等则返回0,相当于  与操作
+    jnz seta20.1                                    # jump if not zero 运算结果不为零则转移
 
-    movb $0xd1, %al                                 # 0xd1 -> port 0x64
+    movb $0xd1, %al                                 # 0xd1 -> al    0xd1数值写入到al寄存器
     outb %al, $0x64                                 # 0xd1 means: write data to 8042's P2 port
 
 seta20.2:
@@ -39,8 +41,8 @@ seta20.2:
     testb $0x2, %al
     jnz seta20.2
 
-    movb $0xdf, %al                                 # 0xdf -> port 0x60
-    outb %al, $0x60                                 # 0xdf = 11011111, means set P2's A20 bit(the 1 bit) to 1
+    movb $0xdf, %al                                 # 0xdf -> al
+    outb %al, $0x60                                 # 0xdf = 11011111, means set P2's A20 bit(the 1 bit) to 1  A20位设置为1,启动保护模式
 
     # Switch from real to protected mode, using a bootstrap GDT
     # and segment translation that makes virtual addresses
