@@ -112,4 +112,26 @@ BIOS将Bootloader搬运到了`0x7c00`，程序再从此地址开始运行。
   movl %eax, %cr0             # 给cr0赋值，启动保护模式
   ```
 
-  
+## exam4
+
+通过阅读bootmain.c,了解bootloader如何加载ELF文件。通过分析源代码和通过qemu来运行并调试bootloader和OS,
+
+* bootloader如何读取硬盘扇区的?
+
+  bootloader就是`bin/bootblock`会加入到`ucore.img`中。bootblock只有512字节，作用是将操作系统加载到内存中。下面是具体的过程：
+
+  1.进行一些初始化操作（bootblock），后面会调用bootmain函数（步骤2-5）
+
+  2.读取EFLHDR
+
+  2.验证ELFHDR，通过`e_magic`这个成员变量
+
+  3.获取`program header`（ph）及其终止地址
+
+  4.以SECTSIZE为单位，逐步读取代码
+
+  5.通过ELFHDR的`e_entry`成员变量指向的地址，执行代码
+
+* bootloader是如何加载ELF格式的OS?
+
+  上一个问题的2-5步。

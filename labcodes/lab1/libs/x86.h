@@ -35,6 +35,15 @@ static inline void sti(void) __attribute__((always_inline));
 static inline void cli(void) __attribute__((always_inline));
 static inline void ltr(uint16_t sel) __attribute__((always_inline));
 
+/**
+c asm语法：
+asm(assembler template
+	:output operands (optional)
+	:input operands  (optional)
+	:clobbers        (optional)
+)
+%0 表示用到的第0个寄存器
+*/
 static inline uint8_t
 inb(uint16_t port) {
     uint8_t data;

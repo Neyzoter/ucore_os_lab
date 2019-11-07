@@ -40,6 +40,10 @@ waitdisk(void) {
 }
 
 /* readsect - read a single sector at @secno into @dst */
+/**
+ * 读取一个扇区
+ * scc
+ */
 static void
 readsect(void *dst, uint32_t secno) {
     // wait for disk to be ready
@@ -56,6 +60,7 @@ readsect(void *dst, uint32_t secno) {
     waitdisk();
 
     // read a sector
+    // [scc] insl : 读取32位扇区个数
     insl(0x1F0, dst, SECTSIZE / 4);
 }
 
