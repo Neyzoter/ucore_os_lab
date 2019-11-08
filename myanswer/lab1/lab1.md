@@ -135,3 +135,77 @@ BIOS将Bootloader搬运到了`0x7c00`，程序再从此地址开始运行。
 * bootloader是如何加载ELF格式的OS?
 
   上一个问题的2-5步。
+
+## exam5
+
+```
+....
+ebp:0x00007b28	eip:0x00100992	args:0x00010094	0x00010094	0x00007b58	0x00100096
+				kern/debug/kdebug.c:305:	print_stackframe+22
+ebp:0x00007b38	eip:0x00100c79	args:0x00000000	0x00000000	0x00000000	0x00007ba8
+				kern/debug/kmonitor.c:125:	mon_backtrace+10
+ebp:0x00007b58	eip:0x00100096	args:0x00000000	0x00007b80	0xffff0000	0x00007b84
+				kern/init/init.c:48:	grade_backtrace2+33
+ebp:0x00007b78	eip:0x001000bf	args:0x00000000	0xffff0000	0x00007ba4	0x00000029
+				kern/init/init.c:53:	grade_backtrace1+38
+ebp:0x00007b98	eip:0x001000dd	args:0x00000000	0x00100000	0xffff0000	0x0000001d
+				kern/init/init.c:58:	grade_backtrace0+23
+ebp:0x00007bb8	eip:0x00100102	args:0x0010353c	0x00103520	0x00001308	0x00000000
+				kern/init/init.c:63:	grade_backtrace+34
+ebp:0x00007be8	eip:0x00100059	args:0x00000000	0x00000000	0x00000000	0x00007c53
+				kern/init/init.c:28:	kern_init+88
+ebp:0x00007bf8	eip:0x00007d73	args:0xc031fcfa	0xc08ed88e	0x64e4d08e	0xfa7502a8
+<unknow>:	--	0x00007d72	–
+....
+```
+
+打印栈帧的函数:
+
+```c
+void print_stackframe(void) {
+     /* LAB1 YOUR CODE : STEP 1 */
+     /* (1) call read_ebp() to get the value of ebp. the type is (uint32_t);
+      * (2) call read_eip() to get the value of eip. the type is (uint32_t);
+      * (3) from 0 .. STACKFRAME_DEPTH
+      *    (3.1) printf value of ebp, eip
+      *    (3.2) (uint32_t)calling arguments [0..4] = the contents in address (uint32_t)ebp +2 [0..4]
+      *    (3.3) cprintf("\n");
+      *    (3.4) call print_debuginfo(eip-1) to print the C calling function name and line number, etc.
+      *    (3.5) popup a calling stackframe
+      *           NOTICE: the calling funciton's return addr eip  = ss:[ebp+4]
+      *                   the calling funciton's ebp = ss:[ebp]
+      */
+    uint32_t ebp = read_ebp();uint32_t eip = read_eip();
+    uint32_t i,j;
+    for(i = 0;i < STACKFRAME_DEPTH;i++){
+        cprintf("ebp:0x%08x eip:0x%08x args:", ebp,eip);
+        // (uint32_t *)ebp + 2 数值上等于 (u8 *)ebp + 4
+        uint32_t * args = (uint32_t *)ebp + 2;
+        for(j = 0;j < 4;j++){
+            cprintf("0x%08x ",args[j]);
+        }
+        cprintf("\n");
+        print_debuginfo(eip-1);
+        eip = * ((uint32_t *)ebp + 1);
+        ebp = * ((uint32_t *)ebp);
+        // eip = ((uint32_t *)ebp)[1];
+        // ebp = ((uint32_t *)ebp)[0];
+    } 
+}
+```
+
+```
+pushl			%ebp
+movl			%esp	,	%ebp
+调用函数前，都会调用以上汇编指令，保存上一个ebp，并将ebp指向现在的栈顶
+
+高地址 |    栈底    |   
+      |    ...    |
+      |    ...    |
+      |    参数3   |
+      |    参数2   |
+      |    参数1   |
+      |  返回地址   |
+      |  上层[ebp] |  <---- [ebp]
+低地址 |  局部变量   |
+```
