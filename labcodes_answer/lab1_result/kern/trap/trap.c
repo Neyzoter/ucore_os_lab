@@ -209,6 +209,7 @@ trap_dispatch(struct trapframe *tf) {
             print_trapframe(tf);
             panic("unexpected trap in kernel.\n");
         }
+
     }
 }
 

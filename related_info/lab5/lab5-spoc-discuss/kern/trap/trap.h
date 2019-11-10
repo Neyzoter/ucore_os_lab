@@ -67,7 +67,7 @@ struct trapframe {
     uint16_t tf_padding2;
     uint16_t tf_ds;
     uint16_t tf_padding3;
-    uint32_t tf_trapno;
+    uint32_t tf_trapno;    // [scc] 在kern/trap/vectors.S中的pushl实现入栈
     /* below here defined by x86 hardware */
     uint32_t tf_err;
     uintptr_t tf_eip;

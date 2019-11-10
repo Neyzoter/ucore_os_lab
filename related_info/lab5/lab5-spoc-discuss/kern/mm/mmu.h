@@ -62,6 +62,7 @@
 #include <defs.h>
 
 /* Gate descriptors for interrupts and traps */
+// [scc] 定义IDT gate
 struct gatedesc {
     unsigned gd_off_15_0 : 16;      // low 16 bits of offset in segment
     unsigned gd_ss : 16;            // segment selector

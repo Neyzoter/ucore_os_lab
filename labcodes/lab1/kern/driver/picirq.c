@@ -28,6 +28,8 @@ pic_enable(unsigned int irq) {
 }
 
 /* pic_init - initialize the 8259A interrupt controllers */
+// [scc] 中断控制器8259接受到外部中断后，会存放在寄存器，直到CPU8086可以处理，则会发送一个中断标志给CPU
+// [scc] CPU进一步返回信号来获取中断类型，8259会挑选一个优先级最高的给CPU处理。
 void
 pic_init(void) {
     did_init = 1;

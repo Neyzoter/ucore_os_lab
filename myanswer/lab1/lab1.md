@@ -209,3 +209,111 @@ movl			%esp	,	%ebp
       |  上层[ebp] |  <---- [ebp]
 低地址 |  局部变量   |
 ```
+
+## exam6
+
+**1.中断描述符表(也可简称为保护模式下的中断向量表)中一个表项占多少字节?其中哪几位代表中断处理代码的入口?**
+
+8个字节，下图中的SELECTION表示选择子，找到相应段描述符后，进而得到程序段的基址，结合OFFSET得到真是的中断处理代码。代码中断描述符表代码如下，
+
+```c
+struct gatedesc {
+    unsigned gd_off_15_0 : 16;      // low 16 bits of offset in segment
+    unsigned gd_ss : 16;            // segment selector
+    unsigned gd_args : 5;           // # args, 0 for interrupt/trap gates
+    unsigned gd_rsv1 : 3;           // reserved(should be zero I guess)
+    unsigned gd_type : 4;           // type(STS_{TG,IG32,TG32})
+    unsigned gd_s : 1;              // must be 0 (system)
+    unsigned gd_dpl : 2;            // descriptor(meaning new) privilege level
+    unsigned gd_p : 1;              // Present
+    unsigned gd_off_31_16 : 16;     // high bits of offset in segment
+};
+```
+
+图片表示，
+
+<img src="./img/gates.png" width="600" alt="IDT gate descriptors">
+
+**2.请编程完善`kern/trap/trap.c`中对中断向量表进行初始化的函数`idt_init`。在`idt_init`函数中，依次对所有中断入口进行初始化。使用mmu.h中的SETGATE宏，填充idt数组内容。每个中断的入口由`tools/vectors.c`生成，使用`trap.c`中声明的`vectors`数组即可。**
+
+```c
+/* idt_init - initialize IDT to each of the entry points in kern/trap/vectors.S */
+void
+idt_init(void) {
+     /* LAB1 YOUR CODE : STEP 2 */
+     /* (1) Where are the entry addrs of each Interrupt Service Routine (ISR)?
+      *     All ISR's entry addrs are stored in __vectors. where is uintptr_t __vectors[] ?
+      *     __vectors[] is in kern/trap/vector.S which is produced by tools/vector.c
+      *     (try "make" command in lab1, then you will find vector.S in kern/trap DIR)
+      *     You can use  "extern uintptr_t __vectors[];" to define this extern variable which will be used later.
+      * (2) Now you should setup the entries of ISR in Interrupt Description Table (IDT).
+      *     Can you see idt[256] in this file? Yes, it's IDT! you can use SETGATE macro to setup each item of IDT
+      * (3) After setup the contents of IDT, you will let CPU know where is the IDT by using 'lidt' instruction.
+      *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.
+      *     Notice: the argument of lidt is idt_pd. try to find it!
+      */
+    extern uintptr_t __vectors[]; // [scc] 定义在vectors.S
+    int i = 0;
+    // [scc] 256个
+    for(; i < sizeof(idt) / sizeof(struct gatedesc) ; i++){
+        SETGATE(idt[i], 0, GD_KTEXT, __vectors[i], DPL_KERNEL)
+    }
+    // set for switch from user to kernel
+    SETGATE(idt[T_SWITCH_TOK], 0, GD_KTEXT, __vectors[T_SWITCH_TOK], DPL_USER);
+	// load the IDT
+    lidt(&idt_pd);
+
+}
+```
+
+**3.请编程完善trap.c中的中断处理函数trap,在对时钟中断进行处理的部分填写trap函数中处理时钟中断的部分,使操作系统每遇到100次时钟中断后,调用`print_ticks`子程序,向屏幕上打印一行文字”100 ticks”。**
+
+加载中断向量（`kern/trap/vectors.S`中定义），中断服务函数调用过程（以vector3为例）：
+
+1.进入vector3
+
+```assembly
+# handler
+.text
+.globl __alltraps
+.globl vector0
+vector0:      
+  pushl $0         
+  pushl $0         
+  jmp __alltraps   
+...
+vector3:            ; 进入vector0
+  pushl $0          ; 这个是trapframe.tf_err?
+  pushl $3          ; 这个就是trapframe.tf_trapno，中断号
+  jmp __alltraps    ; 在kern/trap/trapentry.S定义
+```
+
+2.进入`__alltraps`
+
+`__alltraps`在`kern/trap/trapentry.S`定义，实现了一些信息的保存，如DS、ES、FS、ESP等，最终组成了trapframe这个结构提。`__alltraps`还调用了`kern/trap/trap.c`的trap函数（参数是esp）。
+
+3.进入`trap`
+
+trap调用了`trap_dispatch`进行相应的中断操作。其中，定时服务函数：
+
+```c
+    case IRQ_OFFSET + IRQ_TIMER:
+        /* LAB1 YOUR CODE : STEP 3 */
+        /* handle the timer interrupt */
+        /* (1) After a timer interrupt, you should record this event using a global variable (increase it), such as ticks in kern/driver/clock.c
+         * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
+         * (3) Too Simple? Yes, I think so!
+         */
+        ticks += 1;
+        // [scc] Time : 1s -> Time : 2s ...
+        // if(ticks % TICK_NUM == 0){
+        //     cprintf("Time : %d s\n", ticks / TICK_NUM);
+        // }
+
+        // [scc] 100 ticks 
+        if(ticks % TICK_NUM == 0){
+            print_ticks();
+        }
+        break;
+```
+

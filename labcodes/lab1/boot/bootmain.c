@@ -97,6 +97,7 @@ readseg(uintptr_t va, uint32_t count, uint32_t offset) {
 /* bootmain - the entry of bootloader */
 void
 bootmain(void) {
+    
     // read the 1st page off disk
     readseg((uintptr_t)ELFHDR, SECTSIZE * 8, 0);
 
@@ -117,13 +118,12 @@ bootmain(void) {
         readseg(ph->p_va & 0xFFFFFF, ph->p_memsz, ph->p_offset);
     }
     // [scc] 通过hexdump -C kernel可以查看kernel的内容
-    // [scc] ELF文件0x1000位置后面的0xd1ec比特被载入内存0x00100000
+    // [scc] ELF文件0x1000位置后面的0xd1ec比特被载入内存0x00100000(kern/kern_init？？)
     // [scc] ELF文件0xf000位置后面的0x1d20比特被载入内存0x0010e000
 
     // call the entry point from the ELF header
     // note: does not return
     ((void (*)(void))(ELFHDR->e_entry & 0xFFFFFF))();
-
 bad:
     outw(0x8A00, 0x8A00);
     outw(0x8A00, 0x8E00);
