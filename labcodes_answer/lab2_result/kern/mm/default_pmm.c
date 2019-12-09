@@ -100,36 +100,45 @@ free_area_t free_area;
 
 static void
 default_init(void) {
-    list_init(&free_list);
+    list_init(&free_list); // [scc] 双向循环链表
     nr_free = 0;
 }
 
+/**
+ * 初始化一块基于页机制的内存空间，刚开始只有一个包含了信息的page（后面跟着多个空闲的页没有被使用）
+ * @param base：页基址
+ * @param n   ：页个数
+ */
 static void
 default_init_memmap(struct Page *base, size_t n) {
     assert(n > 0);
     struct Page *p = base;
     for (; p != base + n; p ++) {
-        assert(PageReserved(p));
+        assert(PageReserved(p)); // [scc] 页未被利用
         p->flags = p->property = 0;
-        set_page_ref(p, 0);
+        set_page_ref(p, 0); // [scc] 该页被引用的个数
     }
-    base->property = n;
+    base->property = n; // [scc] 有n个pages可以利用
     SetPageProperty(base);
-    nr_free += n;
-    list_add_before(&free_list, &(base->page_link));
+    nr_free += n; // [scc] 未被使用的页个数
+    list_add_before(&free_list, &(base->page_link)); // [scc] 在前面添加这块区域
 }
 
+/**
+ * 在free_list中找到一块有n个pages的内存块
+ * @param n page个数
+ */
 static struct Page *
 default_alloc_pages(size_t n) {
     assert(n > 0);
-    if (n > nr_free) {
+    if (n > nr_free) { // [scc] free_list中的页已经不够了
         return NULL;
     }
     struct Page *page = NULL;
     list_entry_t *le = &free_list;
     // TODO: optimize (next-fit)
     while ((le = list_next(le)) != &free_list) {
-        struct Page *p = le2page(le, page_link);
+        struct Page *p = le2page(le, page_link); // [scc] 以le为开始，内存块连续的page数目
         if (p->property >= n) {
             page = p;
             break;
@@ -138,11 +147,11 @@ default_alloc_pages(size_t n) {
     if (page != NULL) {
         if (page->property > n) {
             struct Page *p = page + n;
-            p->property = page->property - n;
+            p->property = page->property - n; // |----|--------|  p指向第二个|，设置后面内存块连续的page数目减少了n个，因为前面的被使用掉了
             SetPageProperty(p);
-            list_add_after(&(page->page_link), &(p->page_link));
+            list_add_after(&(page->page_link), &(p->page_link));// 将p添加到page后面，后面的几个后面会将page删除掉
         }
-        list_del(&(page->page_link));
+        list_del(&(page->page_link));  // [scc] 将原来的page从free_list删除
         nr_free -= n;
         ClearPageProperty(page);
     }

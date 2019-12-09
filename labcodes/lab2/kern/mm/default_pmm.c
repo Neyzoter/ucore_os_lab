@@ -104,12 +104,17 @@ default_init(void) {
     nr_free = 0;
 }
 
+/**
+ * 初始化内存 - 页
+ * @param base：页基址
+ * @param n   ：页个数
+ */
 static void
 default_init_memmap(struct Page *base, size_t n) {
     assert(n > 0);
     struct Page *p = base;
     for (; p != base + n; p ++) {
-        assert(PageReserved(p));
+        assert(PageReserved(p));// 页未被使用
         p->flags = p->property = 0;
         set_page_ref(p, 0);
     }
