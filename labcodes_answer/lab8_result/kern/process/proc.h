@@ -10,10 +10,10 @@
 
 // process's state in his life cycle
 enum proc_state {
-    PROC_UNINIT = 0,  // uninitialized
-    PROC_SLEEPING,    // sleeping
-    PROC_RUNNABLE,    // runnable(maybe running)
-    PROC_ZOMBIE,      // almost dead, and wait parent proc to reclaim his resource
+    PROC_UNINIT = 0,  // uninitialized  未初始化
+    PROC_SLEEPING,    // sleeping  睡眠
+    PROC_RUNNABLE,    // runnable(maybe running)  可运行
+    PROC_ZOMBIE,      // almost dead, and wait parent proc to reclaim his resource  子进程已经exit，但是父进程还没处理
 };
 
 // Saved registers for kernel context switches.
@@ -34,6 +34,7 @@ struct context {
     uint32_t ebp;
 };
 
+// [scc] 进程名称长度
 #define PROC_NAME_LEN               50
 #define MAX_PROCESS                 4096
 #define MAX_PID                     (MAX_PROCESS * 2)

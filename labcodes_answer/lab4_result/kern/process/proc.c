@@ -62,6 +62,7 @@ SYS_getpid      : get the process's pid
 // [scc] 进程控制块列表
 list_entry_t proc_list;
 
+// [scc] 创建Hash表的个数2^10=1024个，用于快速查询PCB
 #define HASH_SHIFT          10
 #define HASH_LIST_SIZE      (1 << HASH_SHIFT)
 #define pid_hashfn(x)       (hash32(x, HASH_SHIFT))
@@ -78,13 +79,19 @@ struct proc_struct *current = NULL;
 
 static int nr_process = 0;
 
+// [scc] @ ./entry.S
 void kernel_thread_entry(void);
 void forkrets(struct trapframe *tf);
 void switch_to(struct context *from, struct context *to);
 
 // alloc_proc - alloc a proc_struct and init all fields of proc_struct
+/**
+ * 分配进程的内存空间
+ * 
+ * */
 static struct proc_struct *
 alloc_proc(void) {
+    // 给进程分配空间
     struct proc_struct *proc = kmalloc(sizeof(struct proc_struct));
     if (proc != NULL) {
     //LAB4:EXERCISE1 YOUR CODE
@@ -219,6 +226,9 @@ find_proc(int pid) {
 // kernel_thread - create a kernel thread using "fn" function
 // NOTE: the contents of temp trapframe tf will be copied to 
 //       proc->tf in do_fork-->copy_thread function
+// [scc] fn 输入 进程名称 init_main
+// [scc] arg 输入"Hello world!!"
+// [scc] clone_flags 输入 0
 int
 kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags) {
     struct trapframe tf;
@@ -356,6 +366,7 @@ do_exit(int error_code) {
 }
 
 // init_main - the second kernel thread used to create user_main kernel threads
+// [scc] 子进程init_main，打印信息
 static int
 init_main(void *arg) {
     cprintf("this initproc, pid = %d, name = \"%s\"\n", current->pid, get_proc_name(current));
@@ -366,28 +377,31 @@ init_main(void *arg) {
 
 // proc_init - set up the first kernel thread idleproc "idle" by itself and 
 //           - create the second kernel thread init_main
+// [scc] 创建第0个内核线程Idel，并创建第二个内核线程init_main
 void
 proc_init(void) {
     int i;
     // [scc] 初始化PCB列表
     list_init(&proc_list);
+    // [scc] 初始化PCB Hash 表
     for (i = 0; i < HASH_LIST_SIZE; i ++) {
         list_init(hash_list + i);
     }
-
+    // [scc] 给空闲进程分配内存空间
     if ((idleproc = alloc_proc()) == NULL) {
         panic("cannot alloc idleproc.\n");
     }
 
+    // [scc] 空闲进程初始化
     idleproc->pid = 0;
-    idleproc->state = PROC_RUNNABLE;
+    idleproc->state = PROC_RUNNABLE;   // [scc] 状态，可运行的
     idleproc->kstack = (uintptr_t)bootstack;
     idleproc->need_resched = 1;
-    set_proc_name(idleproc, "idle");
-    nr_process ++;
+    set_proc_name(idleproc, "idle");  // [scc] 名称
+    nr_process ++;  // [scc] 进程数目
 
     current = idleproc;
-
+    // [scc] 创建内核进程init_main，打印信息
     int pid = kernel_thread(init_main, "Hello world!!", 0);
     if (pid <= 0) {
         panic("create init_main failed.\n");
