@@ -3,6 +3,7 @@
 switch_to:                      # switch_to(from, to)
 
     # save from's registers
+    # 数字表示switch_to输入参数的地址空间的偏移
     movl 4(%esp), %eax          # eax points to from
     popl 0(%eax)                # save eip !popl
     movl %esp, 4(%eax)

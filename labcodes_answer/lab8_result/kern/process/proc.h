@@ -46,13 +46,13 @@ struct inode;
 struct proc_struct {
     enum proc_state state;                      // Process state
     int pid;                                    // Process ID
-    int runs;                                   // the running times of Proces
+    int runs;                                   // the running times of Procces [LAB4 SCC] 任务运行的次数
     uintptr_t kstack;                           // Process kernel stack
     volatile bool need_resched;                 // bool value: need to be rescheduled to release CPU?
     struct proc_struct *parent;                 // the parent process
-    struct mm_struct *mm;                       // Process's memory management field
+    struct mm_struct *mm;                       // Process's memory management field，[LAB4 SCC] 虚存管理，由于内核堆栈常驻内存，所以对于内核线程而言意义不大，主要是LAB5的用户进程
     struct context context;                     // Switch here to run process
-    struct trapframe *tf;                       // Trap frame for current interrupt
+    struct trapframe *tf;                       // Trap frame for current interrupt，中断帧当用户空间跳到内核空间时，中断帧记录了进程在中断前的状态，当内核跳回用户空间时，需要调整中断帧以恢复让进程继续执行的各寄存器值
     uintptr_t cr3;                              // CR3 register: the base addr of Page Directroy Table(PDT)
     uint32_t flags;                             // Process flag
     char name[PROC_NAME_LEN + 1];               // Process name

@@ -10,6 +10,8 @@ wakeup_proc(struct proc_struct *proc) {
     proc->state = PROC_RUNNABLE;
 }
 
+// [LAB4 SCC] 进程调度
+//            只调度一次
 void
 schedule(void) {
     bool intr_flag;
@@ -21,6 +23,7 @@ schedule(void) {
         last = (current == idleproc) ? &proc_list : &(current->list_link);
         le = last;
         do {
+            // [scc] 将所有的进程都设置为PROC_RUNNABLE
             if ((le = list_next(le)) != &proc_list) {
                 next = le2proc(le, list_link);
                 if (next->state == PROC_RUNNABLE) {
@@ -31,7 +34,7 @@ schedule(void) {
         if (next == NULL || next->state != PROC_RUNNABLE) {
             next = idleproc;
         }
-        next->runs ++;
+        next->runs ++; // [LAB4 SCC] 认为运行次数
         if (next != current) {
             proc_run(next);
         }

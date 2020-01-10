@@ -178,6 +178,7 @@ get_pid(void) {
 
 // proc_run - make process "proc" running on cpu
 // NOTE: before call switch_to, should load  base addr of "proc"'s new PDT
+// [LAB4 SCC] 进程运行
 void
 proc_run(struct proc_struct *proc) {
     if (proc != current) {
@@ -188,6 +189,7 @@ proc_run(struct proc_struct *proc) {
             current = proc;
             load_esp0(next->kstack + KSTACKSIZE);
             lcr3(next->cr3);
+            // [LAB4 SCC] 保存from现场，并加载to进程的上下文
             switch_to(&(prev->context), &(next->context));
         }
         local_intr_restore(intr_flag);
@@ -408,10 +410,11 @@ proc_init(void) {
     idleproc->pid = 0;
     idleproc->state = PROC_RUNNABLE;   // [LAB4 SCC] 状态，可运行的
     idleproc->kstack = (uintptr_t)bootstack;
-    idleproc->need_resched = 1;
+    idleproc->need_resched = 1;  // [LAB4 SCC] 是否需要被重新调度（有进程需要被调度），在cpu_idle中会根据此来进行调度操作
     set_proc_name(idleproc, "idle");  // [LAB4 SCC] 名称
     nr_process ++;  // [LAB4 SCC] 进程数目
 
+    // [LAB4 SCC] 设置空闲任务为current 任务，在cpu_idle中调用
     current = idleproc;
     // [LAB4 SCC] 创建内核进程init_main，打印信息
     //       包括tf设置、
@@ -433,6 +436,7 @@ proc_init(void) {
 void
 cpu_idle(void) {
     while (1) {
+        // [scc] 不停查询是否有其他内核线程需要执行，如果没有则会幅值为0
         if (current->need_resched) {
             schedule();
         }
