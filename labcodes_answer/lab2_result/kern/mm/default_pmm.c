@@ -100,7 +100,7 @@ free_area_t free_area;
 
 static void
 default_init(void) {
-    list_init(&free_list); // [scc] 双向循环链表
+    list_init(&free_list); // [LAB2 SCC] 双向循环链表
     nr_free = 0;
 }
 
@@ -114,14 +114,14 @@ default_init_memmap(struct Page *base, size_t n) {
     assert(n > 0);
     struct Page *p = base;
     for (; p != base + n; p ++) {
-        assert(PageReserved(p)); // [scc] 页未被利用
+        assert(PageReserved(p)); // [LAB2 SCC] 页未被利用
         p->flags = p->property = 0;
-        set_page_ref(p, 0); // [scc] 该页被引用的个数
+        set_page_ref(p, 0); // [LAB2 SCC] 该页被引用的个数
     }
-    base->property = n; // [scc] 有n个pages可以利用
+    base->property = n; // [LAB2 SCC] 有n个pages可以利用
     SetPageProperty(base);
-    nr_free += n; // [scc] 未被使用的页个数
-    list_add_before(&free_list, &(base->page_link)); // [scc] 在前面添加这块区域
+    nr_free += n; // [LAB2 SCC] 未被使用的页个数
+    list_add_before(&free_list, &(base->page_link)); // [LAB2 SCC] 在前面添加这块区域
 }
 
 /**
@@ -131,14 +131,14 @@ default_init_memmap(struct Page *base, size_t n) {
 static struct Page *
 default_alloc_pages(size_t n) {
     assert(n > 0);
-    if (n > nr_free) { // [scc] free_list中的页已经不够了
+    if (n > nr_free) { // [LAB2 SCC] free_list中的页已经不够了
         return NULL;
     }
     struct Page *page = NULL;
     list_entry_t *le = &free_list;
     // TODO: optimize (next-fit)
     while ((le = list_next(le)) != &free_list) {
-        struct Page *p = le2page(le, page_link); // [scc] 以le为开始，内存块连续的page数目
+        struct Page *p = le2page(le, page_link); // [LAB2 SCC] 以le为开始，内存块连续的page数目
         if (p->property >= n) {
             page = p;
             break;
@@ -151,7 +151,7 @@ default_alloc_pages(size_t n) {
             SetPageProperty(p);
             list_add_after(&(page->page_link), &(p->page_link));// 将p添加到page后面，后面的几个后面会将page删除掉
         }
-        list_del(&(page->page_link));  // [scc] 将原来的page从free_list删除
+        list_del(&(page->page_link));  // [LAB2 SCC] 将原来的page从free_list删除
         nr_free -= n;
         ClearPageProperty(page);
     }

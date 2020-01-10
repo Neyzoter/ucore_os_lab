@@ -152,6 +152,7 @@ init_memmap(struct Page *base, size_t n) {
 }
 
 //alloc_pages - call pmm->alloc_pages to allocate a continuous n*PAGESIZE memory 
+// [LAB4 SCC] 分配n*PAGESIZE连续内存空间
 struct Page *
 alloc_pages(size_t n) {
     struct Page *page=NULL;
@@ -159,16 +160,20 @@ alloc_pages(size_t n) {
     
     while (1)
     {
+        // [LAB4 SCC] 进入临界区
          local_intr_save(intr_flag);
          {
+             // [LAB4 SCC] 分配页
               page = pmm_manager->alloc_pages(n);
          }
+         //[LAB4 SCC] 出临界区
          local_intr_restore(intr_flag);
 
          if (page != NULL || n > 1 || swap_init_ok == 0) break;
          
          extern struct mm_struct *check_mm_struct;
          //cprintf("page %x, call swap_out in alloc_pages %d\n",page, n);
+         // [LAB4 SCC] swap到交换区
          swap_out(check_mm_struct, n, 0);
     }
     //cprintf("n %d,get page %x, No %d in alloc_pages\n",n,page,(page-pages));

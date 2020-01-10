@@ -302,7 +302,7 @@ print_stackframe(void) {
       *           NOTICE: the calling funciton's return addr eip  = ss:[ebp+4]
       *                   the calling funciton's ebp = ss:[ebp]
       */
-    // [scc] 实际上EBP还需要结合SS寄存器（堆栈段寄存器）来找到上一个EBP
+    // [LAB1 SCC] 实际上EBP还需要结合SS寄存器（堆栈段寄存器）来找到上一个EBP
     uint32_t ebp = read_ebp(), eip = read_eip();
 
     int i, j;

@@ -37,7 +37,7 @@ kern_init(void) {
     idt_init();                 // init interrupt descriptor table
 
     vmm_init();                 // init virtual memory management
-    proc_init();                // init process table [scc] 初始化进程
+    proc_init();                // init process table [LAB4 SCC] 初始化进程
     
     ide_init();                 // init ide devices
     swap_init();                // init swap
@@ -49,6 +49,7 @@ kern_init(void) {
     // user/kernel mode switch test
     //lab1_switch_test();
     
+    // [LAB4 SCC] 开始运行空闲任务
     cpu_idle();                 // run idle process
 }
 

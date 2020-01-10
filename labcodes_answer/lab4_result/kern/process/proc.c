@@ -59,10 +59,10 @@ SYS_getpid      : get the process's pid
 */
 
 // the process set's list
-// [scc] 进程控制块列表
+// [LAB4 SCC] 进程控制块列表
 list_entry_t proc_list;
 
-// [scc] 创建Hash表的个数2^10=1024个，用于快速查询PCB
+// [LAB4 SCC] 创建Hash表的个数2^10=1024个，用于快速查询PCB
 #define HASH_SHIFT          10
 #define HASH_LIST_SIZE      (1 << HASH_SHIFT)
 #define pid_hashfn(x)       (hash32(x, HASH_SHIFT))
@@ -79,7 +79,7 @@ struct proc_struct *current = NULL;
 
 static int nr_process = 0;
 
-// [scc] @ ./entry.S
+// [LAB4 SCC] @ ./entry.S
 void kernel_thread_entry(void);
 void forkrets(struct trapframe *tf);
 void switch_to(struct context *from, struct context *to);
@@ -209,6 +209,7 @@ hash_proc(struct proc_struct *proc) {
 }
 
 // find_proc - find proc frome proc hash_list according to pid
+// [LAB4 SCC] 根据pid查找对应的pcb
 struct proc_struct *
 find_proc(int pid) {
     if (0 < pid && pid < MAX_PID) {
@@ -226,9 +227,9 @@ find_proc(int pid) {
 // kernel_thread - create a kernel thread using "fn" function
 // NOTE: the contents of temp trapframe tf will be copied to 
 //       proc->tf in do_fork-->copy_thread function
-// [scc] fn 输入 进程名称 init_main
-// [scc] arg 输入"Hello world!!"
-// [scc] clone_flags 输入 0
+// [LAB4 SCC] fn 输入 进程名称 init_main
+// [LAB4 SCC] arg 输入"Hello world!!"
+// [LAB4 SCC] clone_flags 输入 0
 int
 kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags) {
     struct trapframe tf;
@@ -290,6 +291,7 @@ int
 do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     int ret = -E_NO_FREE_PROC;
     struct proc_struct *proc;
+    // [LAB4 SCC] 超过最多的进程数
     if (nr_process >= MAX_PROCESS) {
         goto fork_out;
     }
@@ -319,38 +321,48 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     //    5. insert proc_struct into hash_list && proc_list
     //    6. call wakeup_proc to make the new child process RUNNABLE
     //    7. set ret vaule using child proc's pid
+
+    // [LAB4 SCC] 分配PCB结构体
     if ((proc = alloc_proc()) == NULL) {
         goto fork_out;
     }
 
     proc->parent = current;
 
+    // [LAB4 SCC] 设置内核堆栈
     if (setup_kstack(proc) != 0) {
         goto bad_fork_cleanup_proc;
     }
+    // [LAB4 SCC] 如果clone_flags & CLONE_VM为真，则需要将父进程的mm拷贝
     if (copy_mm(clone_flags, proc) != 0) {
         goto bad_fork_cleanup_kstack;
     }
+    // [LAB4 SCC] 拷贝线程，包括设置tf、内核入口、堆栈
     copy_thread(proc, stack, tf);
 
     bool intr_flag;
     local_intr_save(intr_flag);
     {
+        // [LAB4 SCC] 分配一个唯一的PID进程号
         proc->pid = get_pid();
+        // [LAB4 SCC] 给该PCB计算hash值，加入到hash表（proc_list）中，一个hash值可能对应多个pcb
         hash_proc(proc);
+        // [LAB4 SCC] 将PCB加入到链表proc_list
         list_add(&proc_list, &(proc->list_link));
         nr_process ++;
     }
     local_intr_restore(intr_flag);
-
+    // [LAB4 SCC] 将进程设置为PROC_RUNNABLE
     wakeup_proc(proc);
 
     ret = proc->pid;
 fork_out:
     return ret;
 
+// [LAB4 SCC] 将内核堆栈的空间释放掉
 bad_fork_cleanup_kstack:
     put_kstack(proc);
+// [LAB4 SCC] 将pcb空间释放掉
 bad_fork_cleanup_proc:
     kfree(proc);
     goto fork_out;
@@ -366,7 +378,7 @@ do_exit(int error_code) {
 }
 
 // init_main - the second kernel thread used to create user_main kernel threads
-// [scc] 子进程init_main，打印信息
+// [LAB4 SCC] 子进程init_main，打印信息
 static int
 init_main(void *arg) {
     cprintf("this initproc, pid = %d, name = \"%s\"\n", current->pid, get_proc_name(current));
@@ -377,37 +389,40 @@ init_main(void *arg) {
 
 // proc_init - set up the first kernel thread idleproc "idle" by itself and 
 //           - create the second kernel thread init_main
-// [scc] 创建第0个内核线程Idel，并创建第二个内核线程init_main
+// [LAB4 SCC] 创建第0个内核线程Idel，并创建第二个内核线程init_main
 void
 proc_init(void) {
     int i;
-    // [scc] 初始化PCB列表
+    // [LAB4 SCC] 初始化PCB列表
     list_init(&proc_list);
-    // [scc] 初始化PCB Hash 表
+    // [LAB4 SCC] 初始化PCB Hash 表
     for (i = 0; i < HASH_LIST_SIZE; i ++) {
         list_init(hash_list + i);
     }
-    // [scc] 给空闲进程分配内存空间
+    // [LAB4 SCC] 给空闲进程分配内存空间
     if ((idleproc = alloc_proc()) == NULL) {
         panic("cannot alloc idleproc.\n");
     }
 
-    // [scc] 空闲进程初始化
+    // [LAB4 SCC] 空闲进程初始化
     idleproc->pid = 0;
-    idleproc->state = PROC_RUNNABLE;   // [scc] 状态，可运行的
+    idleproc->state = PROC_RUNNABLE;   // [LAB4 SCC] 状态，可运行的
     idleproc->kstack = (uintptr_t)bootstack;
     idleproc->need_resched = 1;
-    set_proc_name(idleproc, "idle");  // [scc] 名称
-    nr_process ++;  // [scc] 进程数目
+    set_proc_name(idleproc, "idle");  // [LAB4 SCC] 名称
+    nr_process ++;  // [LAB4 SCC] 进程数目
 
     current = idleproc;
-    // [scc] 创建内核进程init_main，打印信息
+    // [LAB4 SCC] 创建内核进程init_main，打印信息
+    //       包括tf设置、
     int pid = kernel_thread(init_main, "Hello world!!", 0);
     if (pid <= 0) {
         panic("create init_main failed.\n");
     }
 
+    // [LAB4 SCC] 找到init_main的pcb
     initproc = find_proc(pid);
+    // [LAB4 SCC] 设置进程名称
     set_proc_name(initproc, "init");
 
     assert(idleproc != NULL && idleproc->pid == 0);

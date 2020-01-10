@@ -45,5 +45,6 @@ __trapret:
 .globl forkrets
 forkrets:
     # set stack to this new process's trapframe
+    # 设置新进程的堆栈
     movl 4(%esp), %esp
     jmp __trapret

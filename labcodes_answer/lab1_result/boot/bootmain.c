@@ -60,7 +60,7 @@ readsect(void *dst, uint32_t secno) {
     waitdisk();
 
     // read a sector
-    // [scc] insl : 读取32位扇区个数
+    // [LAB1 SCC] insl : 读取32位扇区个数
     insl(0x1F0, dst, SECTSIZE / 4);
 }
 
