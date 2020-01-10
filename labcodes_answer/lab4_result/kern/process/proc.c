@@ -59,6 +59,7 @@ SYS_getpid      : get the process's pid
 */
 
 // the process set's list
+// [scc] 进程控制块列表
 list_entry_t proc_list;
 
 #define HASH_SHIFT          10
@@ -368,7 +369,7 @@ init_main(void *arg) {
 void
 proc_init(void) {
     int i;
-
+    // [scc] 初始化PCB列表
     list_init(&proc_list);
     for (i = 0; i < HASH_LIST_SIZE; i ++) {
         list_init(hash_list + i);
