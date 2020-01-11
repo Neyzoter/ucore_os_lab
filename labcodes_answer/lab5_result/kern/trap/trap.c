@@ -233,6 +233,7 @@ trap_dispatch(struct trapframe *tf) {
         ticks ++;
         if (ticks % TICK_NUM == 0) {
             assert(current != NULL);
+            // [LAB5 SCC] 周期性设置需要调度
             current->need_resched = 1;
         }
         break;

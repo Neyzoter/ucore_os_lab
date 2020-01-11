@@ -413,9 +413,11 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
     if (setup_kstack(proc) != 0) {
         goto bad_fork_cleanup_proc;
     }
+    // [LAB5 SCC] 新进程创建新虚存空间
     if (copy_mm(clone_flags, proc) != 0) {
         goto bad_fork_cleanup_kstack;
     }
+    // [LAB5 SCC] 拷贝tf
     copy_thread(proc, stack, tf);
 
     bool intr_flag;
@@ -772,9 +774,11 @@ do_kill(int pid) {
 }
 
 // kernel_execve - do SYS_exec syscall to exec a user program called by user_main kernel_thread
+// [LAB5 SCC] 系统调用用户进程
 static int
 kernel_execve(const char *name, unsigned char *binary, size_t size) {
     int ret, len = strlen(name);
+    // [LAB5 SCC] 调用sys_exec @ syscall.c
     asm volatile (
         "int %1;"
         : "=a" (ret)
@@ -783,12 +787,16 @@ kernel_execve(const char *name, unsigned char *binary, size_t size) {
     return ret;
 }
 
+// [LAB5 SCC] 进程名称, 代码起始位置, 代码大小
+// [scc] 系统调用，
 #define __KERNEL_EXECVE(name, binary, size) ({                          \
             cprintf("kernel_execve: pid = %d, name = \"%s\".\n",        \
                     current->pid, name);                                \
             kernel_execve(name, binary, (size_t)(size));                \
         })
 
+// [LAB5 SCC] _binary_obj___user_hello_out_start是执行码的开始位置
+// [LAB5 SCC] _binary_obj___user_hello_out_size是执行码的大小
 #define KERNEL_EXECVE(x) ({                                             \
             extern unsigned char _binary_obj___user_##x##_out_start[],  \
                 _binary_obj___user_##x##_out_size[];                    \
@@ -809,7 +817,7 @@ user_main(void *arg) {
 #ifdef TEST
     KERNEL_EXECVE2(TEST, TESTSTART, TESTSIZE);
 #else
-    KERNEL_EXECVE(exit);
+    KERNEL_EXECVE(hello);
 #endif
     panic("user_main execve failed.\n");
 }
@@ -820,6 +828,7 @@ init_main(void *arg) {
     size_t nr_free_pages_store = nr_free_pages();
     size_t kernel_allocated_store = kallocated();
 
+    // [scc] 创建内核线程user_main，来调用用户进程main @ exit.c
     int pid = kernel_thread(user_main, NULL, 0);
     if (pid <= 0) {
         panic("create user_main failed.\n");

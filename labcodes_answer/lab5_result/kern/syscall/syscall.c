@@ -26,6 +26,7 @@ sys_wait(uint32_t arg[]) {
     return do_wait(pid, store);
 }
 
+// [LAB5 SCC] 系统调用: 执行某个用户进程
 static int
 sys_exec(uint32_t arg[]) {
     const char *name = (const char *)arg[0];
