@@ -288,10 +288,13 @@ put_kstack(struct proc_struct *proc) {
 static int
 setup_pgdir(struct mm_struct *mm) {
     struct Page *page;
+    // [LAB5 SCC] 分配一个页给页目录表
     if ((page = alloc_page()) == NULL) {
         return -E_NO_MEM;
     }
     pde_t *pgdir = page2kva(page);
+    // [LAB5 SCC] 将内核页表(boot_pgdir所指)的内容拷贝到此新目录表中
+    //            用户态和内核态使用的是同一个目录表
     memcpy(pgdir, boot_pgdir, PGSIZE);
     pgdir[PDX(VPT)] = PADDR(pgdir) | PTE_P | PTE_W;
     mm->pgdir = pgdir;
@@ -513,10 +516,14 @@ load_icode(unsigned char *binary, size_t size) {
     int ret = -E_NO_MEM;
     struct mm_struct *mm;
     //(1) create a new mm for current process
+    // [LAB5 SCC] 创建一个mm
     if ((mm = mm_create()) == NULL) {
         goto bad_mm;
     }
     //(2) create a new PDT, and mm->pgdir= kernel virtual addr of PDT
+    // [LAB5 SCC] 申请一个页目录表所需的一个页大小的内存空间,
+    //        并把描述ucore内核虚空间映射的内核页表(boot_pgdir所指)的内容拷贝到此新目录表中,
+    //        最后让mm->pgdir指向此页目录表
     if (setup_pgdir(mm) != 0) {
         goto bad_pgdir_cleanup_mm;
     }
@@ -527,6 +534,7 @@ load_icode(unsigned char *binary, size_t size) {
     //(3.2) get the entry of the program section headers of the bianry program (ELF format)
     struct proghdr *ph = (struct proghdr *)(binary + elf->e_phoff);
     //(3.3) This program is valid?
+    // [LAB5 SCC] 检查是否elf是否有效
     if (elf->e_magic != ELF_MAGIC) {
         ret = -E_INVAL_ELF;
         goto bad_elf_cleanup_pgdir;
@@ -651,6 +659,7 @@ bad_mm:
 
 // do_execve - call exit_mmap(mm)&put_pgdir(mm) to reclaim memory space of current process
 //           - call load_icode to setup new memory space accroding binary prog.
+// [LAB5 SCC] 用户进程的创建
 int
 do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
     struct mm_struct *mm = current->mm;
@@ -665,6 +674,7 @@ do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
     memset(local_name, 0, sizeof(local_name));
     memcpy(local_name, name, len);
 
+    // [LAB5 SCC] 删除原来的内存空间
     if (mm != NULL) {
         lcr3(boot_cr3);
         if (mm_count_dec(mm) == 0) {
@@ -675,6 +685,7 @@ do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
         current->mm = NULL;
     }
     int ret;
+
     if ((ret = load_icode(binary, size)) != 0) {
         goto execve_exit;
     }

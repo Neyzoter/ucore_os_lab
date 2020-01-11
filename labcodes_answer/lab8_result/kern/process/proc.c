@@ -620,9 +620,11 @@ load_icode(int fd, int argc, char **kargv) {
 
     int ret = -E_NO_MEM;
     struct mm_struct *mm;
+    // [LAB5 SCC] 申请进程的内存管理数据结构mm所需内存空间,并对mm进行初始化
     if ((mm = mm_create()) == NULL) {
         goto bad_mm;
     }
+
     if (setup_pgdir(mm) != 0) {
         goto bad_pgdir_cleanup_mm;
     }
@@ -803,7 +805,7 @@ failed_cleanup:
 
 // do_execve - call exit_mmap(mm)&put_pgdir(mm) to reclaim memory space of current process
 //           - call load_icode to setup new memory space accroding binary prog.
-// [LAB5 SCC] 用户进程的创建
+
 int
 do_execve(const char *name, int argc, const char **argv) {
     static_assert(EXEC_MAX_ARG_LEN >= FS_MAX_FPATH_LEN);
@@ -843,6 +845,7 @@ do_execve(const char *name, int argc, const char **argv) {
     if ((ret = fd = sysfile_open(path, O_RDONLY)) < 0) {
         goto execve_exit;
     }
+    
     if (mm != NULL) {
         lcr3(boot_cr3);
         if (mm_count_dec(mm) == 0) {

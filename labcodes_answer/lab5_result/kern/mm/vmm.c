@@ -40,6 +40,8 @@ static void check_vma_struct(void);
 static void check_pgfault(void);
 
 // mm_create -  alloc a mm_struct & initialize it.
+// [LAB5 SCC] 创建一个memory manager结构体，用于管理内存，实际的PDT页目录表还没有分配
+//            可以通过setup_pgdir(mm)来实现
 struct mm_struct *
 mm_create(void) {
     struct mm_struct *mm = kmalloc(sizeof(struct mm_struct));
@@ -54,6 +56,7 @@ mm_create(void) {
         else mm->sm_priv = NULL;
         
         set_mm_count(mm, 0);
+        // [LAB5 SCC] 初始化为0
         lock_init(&(mm->mm_lock));
     }    
     return mm;
