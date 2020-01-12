@@ -50,7 +50,9 @@ bootstacktop:
 # kernel builtin pgdir
 # an initial page directory (Page Directory Table, PDT)
 # These page directory table and page table can be reused!
+# [LAB2 SCC] 内核页目录表，可被重用
 .section .data.pgdir
+# [LAB2 SCC] 分配一个PG的空间
 .align PGSIZE
 __boot_pgdir:
 .globl __boot_pgdir

@@ -228,10 +228,12 @@ struct taskstate {
 #define PTSIZE          (PGSIZE * NPTEENTRY)    // bytes mapped by a page directory entry
 #define PTSHIFT         22                      // log2(PTSIZE)
 
+// [LAB2 SCC] >> PTXSHIFT 则正好是4KB
 #define PTXSHIFT        12                      // offset of PTX in a linear address
 #define PDXSHIFT        22                      // offset of PDX in a linear address
 
 /* page table/directory entry flags */
+// [LAB2 SCC] Page Dir Entry的标志
 #define PTE_P           0x001                   // Present
 #define PTE_W           0x002                   // Writeable
 #define PTE_U           0x004                   // User

@@ -189,6 +189,7 @@ nr_free_pages(void) {
 /* pmm_init - initialize the physical memory management */
 static void
 page_init(void) {
+    // [LAB2 SCC] 具体在bootasm.S中进行内存探测
     struct e820map *memmap = (struct e820map *)(0x8000 + KERNBASE);
     uint64_t maxpa = 0;
 
@@ -196,8 +197,20 @@ page_init(void) {
     int i;
     for (i = 0; i < memmap->nr_map; i ++) {
         uint64_t begin = memmap->map[i].addr, end = begin + memmap->map[i].size;
+        /**
+         * [LAB2 SCC] 举例
+         * e820map:
+            memory: 0009fc00, [00000000, 0009fbff], type = 1.
+            memory: 00000400, [0009fc00, 0009ffff], type = 2.
+            memory: 00010000, [000f0000, 000fffff], type = 2.
+            memory: 07ee0000, [00100000, 07fdffff], type = 1.
+            memory: 00020000, [07fe0000, 07ffffff], type = 2.
+            memory: 00040000, [fffc0000, ffffffff], type = 2.
+         * */
         cprintf("  memory: %08llx, [%08llx, %08llx], type = %d.\n",
                 memmap->map[i].size, begin, end - 1, memmap->map[i].type);
+        // [LAB2 SCC] 如果是address range memory，则给maxp赋值，后面会检查是否超过了最大内存空间
+        //            如果超出了最大空间，需要将maxpa设置为最大的内存空间
         if (memmap->map[i].type == E820_ARM) {
             if (maxpa < end && begin < KMEMSIZE) {
                 maxpa = end;
@@ -211,17 +224,29 @@ page_init(void) {
     extern char end[];
 
     npage = maxpa / PGSIZE;
+    // [LAB2 SCC] 得到PGSIZE向上整数倍
     pages = (struct Page *)ROUNDUP((void *)end, PGSIZE);
 
     for (i = 0; i < npage; i ++) {
         SetPageReserved(pages + i);
     }
 
+    // [LAB2 SCC] 计算出空闲的空间除掉存放Page结构体后，开始的位置
+    /**
+     * |----Page5------|
+     * |----Page4------|
+     * |----Page3------|
+     * |----Page2------|
+     * |----Page1------|_____freemem
+     * |----Pages------|
+     * */
     uintptr_t freemem = PADDR((uintptr_t)pages + sizeof(struct Page) * npage);
 
     for (i = 0; i < memmap->nr_map; i ++) {
         uint64_t begin = memmap->map[i].addr, end = begin + memmap->map[i].size;
+        // [LAB2 SCC] 可被OS利用的内存空间
         if (memmap->map[i].type == E820_ARM) {
+            // [LAB2 SCC] 留出保持Pages结构体的空间
             if (begin < freemem) {
                 begin = freemem;
             }
@@ -275,6 +300,8 @@ boot_alloc_page(void) {
 void
 pmm_init(void) {
     // We've already enabled paging
+    // [LAB2 SCC] 获取内核内存空间的相对地址, 会用boot_pgdir - KERNBASE
+    //            补充：KADDR是实现内核内存空间相对地址到物理地址空间，即vm + KERNBASE
     boot_cr3 = PADDR(boot_pgdir);
 
     //We need to alloc/free the physical memory (granularity is 4KB or other size). 
@@ -282,10 +309,12 @@ pmm_init(void) {
     //First we should init a physical memory manager(pmm) based on the framework.
     //Then pmm can alloc/free the physical memory. 
     //Now the first_fit/best_fit/worst_fit/buddy_system pmm are available.
+    // [LAB2 SCC] 初始化物理内存管理框架，包含一些回调函数
     init_pmm_manager();
 
     // detect physical memory space, reserve already used memory,
     // then use pmm->init_memmap to create free page list
+    // [LAB2 SCC] 初始化 
     page_init();
 
     //use pmm->check to verify the correctness of the alloc/free function in a pmm
@@ -359,14 +388,28 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
     }
     return NULL;          // (8) return page table entry
 #endif
+    // [LAB2 SCC] 找到PDT页目录表中的一个PDE页目录入口
     pde_t *pdep = &pgdir[PDX(la)];
+    // [LAB2 SCC] 如果还没有使用
+    /**
+     * PDE2和PDE3...指向的PT省略
+     * 
+     * |   PTE    |            |    PT1   |
+     * |---PDE1---|  ---.      |---PTE1---|
+     * |---PDE2---|     |      |---PTE2---|
+     * |---PDE3---|     |      |---PTE3---|
+     * |----------|     '----->|----------|
+     * */
     if (!(*pdep & PTE_P)) {
         struct Page *page;
+        // [LAB2 SCC] 给PDE指向的PT页表分配空间
         if (!create || (page = alloc_page()) == NULL) {
             return NULL;
         }
+        // [LAB2 SCC] 引用次数
         set_page_ref(page, 1);
         uintptr_t pa = page2pa(page);
+        // [LAB2 SCC] KADDR(pa)获取物理地址，设置为0
         memset(KADDR(pa), 0, PGSIZE);
         *pdep = pa | PTE_U | PTE_W | PTE_P;
     }

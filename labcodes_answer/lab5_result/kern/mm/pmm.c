@@ -286,9 +286,11 @@ boot_alloc_page(void) {
 
 //pmm_init - setup a pmm to manage physical memory, build PDT&PT to setup paging mechanism 
 //         - check the correctness of pmm & paging mechanism, print PDT&PT
+// [LAB5 SCC] pmm管理物理内存，建立页目录表PDT和页表 
 void
 pmm_init(void) {
     // We've already enabled paging
+    // [LAB5 SCC] 在KERNBASE基础上的页目录表偏移
     boot_cr3 = PADDR(boot_pgdir);
 
     //We need to alloc/free the physical memory (granularity is 4KB or other size). 

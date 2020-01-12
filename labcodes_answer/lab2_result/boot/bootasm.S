@@ -43,6 +43,7 @@ seta20.2:
     movb $0xdf, %al                                 # 0xdf -> port 0x60
     outb %al, $0x60
 
+# 探测内存
 probe_memory:
     movl $0, 0x8000
     xorl %ebx, %ebx
@@ -57,6 +58,7 @@ start_probe:
     jmp finish_probe
 cont:
     addw $20, %di
+    # 递增struct e820map的成员变量nr_map
     incl 0x8000
     cmpl $0, %ebx
     jnz start_probe

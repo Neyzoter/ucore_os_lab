@@ -7,6 +7,7 @@ ENTRY(kern_entry)
 
 SECTIONS {
     /* Load the kernel at this address: "." means the current address */
+    /* 映射到物理地址空间，需要在虚拟地址空间的基础上加1MB的空间，该空间之前用于Boot */
     . = 0xC0100000;
 
     .text : {

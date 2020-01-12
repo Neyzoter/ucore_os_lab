@@ -113,12 +113,14 @@ static void
 default_init_memmap(struct Page *base, size_t n) {
     assert(n > 0);
     struct Page *p = base;
+    // [LAB2 SCC] p++ 就是下一个page
+    //            指向一个页的物理地址
     for (; p != base + n; p ++) {
         assert(PageReserved(p)); // [LAB2 SCC] 页未被利用
         p->flags = p->property = 0;
         set_page_ref(p, 0); // [LAB2 SCC] 该页被引用的个数
     }
-    base->property = n; // [LAB2 SCC] 有n个pages可以利用
+    base->property = n; // [LAB2 SCC] 有n个pages
     SetPageProperty(base);
     nr_free += n; // [LAB2 SCC] 未被使用的页个数
     list_add_before(&free_list, &(base->page_link)); // [LAB2 SCC] 在前面添加这块区域

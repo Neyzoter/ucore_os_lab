@@ -67,7 +67,9 @@
  * */
 
 /* All physical memory mapped at this address */
+// [LAB2 SCC] 内核基址（虚拟内存）
 #define KERNBASE            0xC0000000
+// [LAB2 SCC] 内核最大的空间，对应上方的Remapped Physical Memory
 #define KMEMSIZE            0x38000000                  // the maximum amount of physical memory
 #define KERNTOP             (KERNBASE + KMEMSIZE)
 
