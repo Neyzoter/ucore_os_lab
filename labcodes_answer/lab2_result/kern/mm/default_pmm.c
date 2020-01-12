@@ -116,12 +116,12 @@ default_init_memmap(struct Page *base, size_t n) {
     // [LAB2 SCC] p++ 就是下一个page
     //            指向一个页的物理地址
     for (; p != base + n; p ++) {
-        assert(PageReserved(p)); // [LAB2 SCC] 页未被利用
-        p->flags = p->property = 0;
+        assert(PageReserved(p)); // [LAB2 SCC] 页保留
+        p->flags = p->property = 0;   // [LAB2 SCC] flags = 0,表示该物理页可以使用(bit0=0)，property成员不可用(bit1=0)
         set_page_ref(p, 0); // [LAB2 SCC] 该页被引用的个数
     }
     base->property = n; // [LAB2 SCC] 有n个pages
-    SetPageProperty(base);
+    SetPageProperty(base); // [LAB2 SCC] 使能Page数据结构的property成员
     nr_free += n; // [LAB2 SCC] 未被使用的页个数
     list_add_before(&free_list, &(base->page_link)); // [LAB2 SCC] 在前面添加这块区域
 }

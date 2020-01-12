@@ -207,7 +207,7 @@ page_init(void) {
             memory: 00020000, [07fe0000, 07ffffff], type = 2.
             memory: 00040000, [fffc0000, ffffffff], type = 2.
          * */
-        cprintf("  memory: %08llx, [%08llx, %08llx], type = %d.\n",
+        cprintf("  memory: %08llx, [0x%08llx, 0x%08llx], type = %d.\n",
                 memmap->map[i].size, begin, end - 1, memmap->map[i].type);
         // [LAB2 SCC] 如果是address range memory，则给maxp赋值，后面会检查是否超过了最大内存空间
         //            如果超出了最大空间，需要将maxpa设置为最大的内存空间
@@ -223,23 +223,19 @@ page_init(void) {
 
     extern char end[];
 
+    // [LAB2 SCC] 估算出所有物理页所需的页表格式
     npage = maxpa / PGSIZE;
-    // [LAB2 SCC] 得到PGSIZE向上整数倍
+    cprintf( "Max physical addr is 0x%08x.\n", maxpa);
+    cprintf( "Num of Pages is %d ( %d MB).\n", npage, maxpa / 1024 / 1024);
+    // [LAB2 SCC] 得到PGSIZE向上整数倍，也就是说从加载bootloader加载完ucore后的地址开始作为Page存储地址
     pages = (struct Page *)ROUNDUP((void *)end, PGSIZE);
-
+    cprintf( "Page struct start addr is 0x%08x.\n", &pages);
     for (i = 0; i < npage; i ++) {
+        // [LAB2 SCC] 将所有的Page设置为保留，在init_memmap会针对可使用的空间，设置为property（即可以使用）
         SetPageReserved(pages + i);
     }
 
-    // [LAB2 SCC] 计算出空闲的空间除掉存放Page结构体后，开始的位置
-    /**
-     * |----Page5------|
-     * |----Page4------|
-     * |----Page3------|
-     * |----Page2------|
-     * |----Page1------|_____freemem
-     * |----Pages------|
-     * */
+    // [LAB2 SCC] 使用bootloader加载ucore内核后的空间作为保存Page数据结构的地方
     uintptr_t freemem = PADDR((uintptr_t)pages + sizeof(struct Page) * npage);
 
     for (i = 0; i < memmap->nr_map; i ++) {
@@ -257,6 +253,7 @@ page_init(void) {
                 begin = ROUNDUP(begin, PGSIZE);
                 end = ROUNDDOWN(end, PGSIZE);
                 if (begin < end) {
+                    // [LAB2 SCC] pa2page实现的是将begin >> 12，也就是可以得到Page数据结构的位置
                     init_memmap(pa2page(begin), (end - begin) / PGSIZE);
                 }
             }
