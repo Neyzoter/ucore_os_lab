@@ -139,6 +139,7 @@ default_alloc_pages(size_t n) {
     struct Page *page = NULL;
     list_entry_t *le = &free_list;
     // TODO: optimize (next-fit)
+    // [LAB2 SCC] 找到一块满足大于n的连续内存空间块
     while ((le = list_next(le)) != &free_list) {
         struct Page *p = le2page(le, page_link); // [LAB2 SCC] 以le为开始，内存块连续的page数目
         if (p->property >= n) {
@@ -151,7 +152,7 @@ default_alloc_pages(size_t n) {
             struct Page *p = page + n;
             p->property = page->property - n; // |----|--------|  p指向第二个|，设置后面内存块连续的page数目减少了n个，因为前面的被使用掉了
             SetPageProperty(p);
-            list_add_after(&(page->page_link), &(p->page_link));// 将p添加到page后面，后面的几个后面会将page删除掉
+            list_add_after(&(page->page_link), &(p->page_link));
         }
         list_del(&(page->page_link));  // [LAB2 SCC] 将原来的page从free_list删除
         nr_free -= n;

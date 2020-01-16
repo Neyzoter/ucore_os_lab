@@ -125,6 +125,7 @@ gdt_init(void) {
     ts.ts_ss0 = KERNEL_DS;
 
     // initialize the TSS filed of the gdt
+    // [LAB2 SCC] TSS Task-State Segment保存了不同优先级的栈地址
     gdt[SEG_TSS] = SEGTSS(STS_T32A, (uintptr_t)&ts, sizeof(ts), DPL_KERNEL);
 
     // reload all segment registers
@@ -333,6 +334,7 @@ pmm_init(void) {
     // we should reload gdt (second time, the last time) to get user segments and the TSS
     // map virtual_addr 0 ~ 4G = linear_addr 0 ~ 4G
     // then set kernel stack (ss:esp) in TSS, setup TSS in gdt, load TSS
+    // [LAB2 SCC] GDT段描述符初始化
     gdt_init();
 
     //now the basic virtual memory map(see memalyout.h) is established.
