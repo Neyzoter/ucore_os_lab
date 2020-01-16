@@ -270,13 +270,16 @@ page_init(void) {
 //  perm: permission of this memory  
 static void
 boot_map_segment(pde_t *pgdir, uintptr_t la, size_t size, uintptr_t pa, uint32_t perm) {
+    // [LAB2 SCC] PGOFF 表示线性地址的物理页偏移，也就是la的低12位，共4KB空间
     assert(PGOFF(la) == PGOFF(pa));
     size_t n = ROUNDUP(size + PGOFF(la), PGSIZE) / PGSIZE;
     la = ROUNDDOWN(la, PGSIZE);
     pa = ROUNDDOWN(pa, PGSIZE);
     for (; n > 0; n --, la += PGSIZE, pa += PGSIZE) {
+        // [LAB2 SCC] 通过pmm_manager获取一个PTE
         pte_t *ptep = get_pte(pgdir, la, 1);
-        assert(ptep != NULL);
+        assert(ptep != NULL); // [LAB2 SCC] 分配失败
+        // [LAB2 SCC] 给这个pte指向要管理的物理页
         *ptep = pa | PTE_P | perm;
     }
 }
@@ -324,10 +327,13 @@ pmm_init(void) {
 
     // recursively insert boot_pgdir in itself
     // to form a virtual page table at virtual address VPT
+    // [LAB2 SCC] 
     boot_pgdir[PDX(VPT)] = PADDR(boot_pgdir) | PTE_P | PTE_W;
 
     // map all physical memory to linear memory with base linear addr KERNBASE
     // linear_addr KERNBASE ~ KERNBASE + KMEMSIZE = phy_addr 0 ~ KMEMSIZE
+    // [LAB2 SCC] 将所有的物理内存映射到线性内存
+    //            也就是说执行完这一步，内核把所有的KMEMSIZE大小的物理空间都以页的形式管理起来了
     boot_map_segment(boot_pgdir, KERNBASE, KMEMSIZE, 0, PTE_W);
 
     // Since we are using bootloader's GDT,
@@ -388,18 +394,20 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
     return NULL;          // (8) return page table entry
 #endif
     // [LAB2 SCC] 找到PDT页目录表中的一个PDE页目录入口
+    //            PDX = ((((uintptr_t)(la)) >> PDXSHIFT) & 0x3FF), 其中PDXSHIFT等于22，最终得到[22:31]
+    //            &pgdir[PDX(la)]是获取页目录表的某一项
     pde_t *pdep = &pgdir[PDX(la)];
-    // [LAB2 SCC] 如果还没有使用
+
     /**
      * PDE2和PDE3...指向的PT省略
      * 
-     * |   PTE    |            |    PT1   |
+     * |   PDT    |            |    PT1   |
      * |---PDE1---|  ---.      |---PTE1---|
      * |---PDE2---|     |      |---PTE2---|
      * |---PDE3---|     |      |---PTE3---|
      * |----------|     '----->|----------|
      * */
-    if (!(*pdep & PTE_P)) {
+    if (!(*pdep & PTE_P)) {    // [LAB2 SCC] PT如果还没有分配，则进行分配
         struct Page *page;
         // [LAB2 SCC] 给PDE指向的PT页表分配空间
         if (!create || (page = alloc_page()) == NULL) {
@@ -407,11 +415,18 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
         }
         // [LAB2 SCC] 引用次数
         set_page_ref(page, 1);
+        // [LAB2 SCC] 将该页转化为物理地址，因为是4KB，所以是向左移12位
         uintptr_t pa = page2pa(page);
         // [LAB2 SCC] KADDR(pa)获取物理地址，设置为0
         memset(KADDR(pa), 0, PGSIZE);
+        // [LAB2 SCC] PDE指向一个PT，并在低位设置标志
+        //            页目录项内容 = (页表起始物理地址 & 0x0FFF) | PTE_U | PTE_W | PTE_P
+        //                       PTE_U:位3,表示用户态的软件可以读取对应地址的物理内存页内容
+        //                       PTE_W:位2,表示物理内存页内容可写
+        //                       PTE_P:位1,表示物理内存页存在
         *pdep = pa | PTE_U | PTE_W | PTE_P;
     }
+    // [LAB2 SCC] PTX(la)为获取线性地址的页表偏移，即可以找到某一个PTE
     return &((pte_t *)KADDR(PDE_ADDR(*pdep)))[PTX(la)];
 }
 

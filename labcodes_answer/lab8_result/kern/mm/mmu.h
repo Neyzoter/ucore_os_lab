@@ -201,12 +201,15 @@ struct taskstate {
 // use PGADDR(PDX(la), PTX(la), PGOFF(la)).
 
 // page directory index
+// [LAB2 SCC] 获取Page Dir的偏移，即可以得到某一个页目录表项
 #define PDX(la) ((((uintptr_t)(la)) >> PDXSHIFT) & 0x3FF)
 
 // page table index
+// [LAB2 SCC] 获取Page Table的偏移，即可以得到某一个页表项
 #define PTX(la) ((((uintptr_t)(la)) >> PTXSHIFT) & 0x3FF)
 
 // page number field of address
+// [LAB2 SCC] 物理页内偏移
 #define PPN(la) (((uintptr_t)(la)) >> PTXSHIFT)
 
 // offset in page
@@ -233,7 +236,7 @@ struct taskstate {
 #define PDXSHIFT        22                      // offset of PDX in a linear address
 
 /* page table/directory entry flags */
-// [LAB2 SCC] Page Dir Entry的标志
+// [LAB2 SCC] Page Table/Dir Entry的标志
 #define PTE_P           0x001                   // Present
 #define PTE_W           0x002                   // Writeable
 #define PTE_U           0x004                   // User
