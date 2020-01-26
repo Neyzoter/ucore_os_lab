@@ -43,7 +43,7 @@ struct proc_struct {
     enum proc_state state;                      // Process state
     int pid;                                    // Process ID
     int runs;                                   // the running times of Proces
-    uintptr_t kstack;                           // Process kernel stack
+    uintptr_t kstack;                           // Process kernel stack, [LAB4 SCC]对于内核线程，是运行时栈；对于用户线程，是是发生特权级改变的时候使保存被打断的硬件信息用的栈
     volatile bool need_resched;                 // bool value: need to be rescheduled to release CPU?
     struct proc_struct *parent;                 // the parent process
     struct mm_struct *mm;                       // Process's memory management field

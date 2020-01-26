@@ -35,9 +35,12 @@ kern_init(void) {
     pic_init();                 // init interrupt controller
     idt_init();                 // init interrupt descriptor table
 
+    // [LAB3 SCC] 初始化虚拟内存管理
     vmm_init();                 // init virtual memory management
 
+    // [LAB3 SCC] 用于页换入换出的硬盘（简称swap硬盘）的初始化工作
     ide_init();                 // init ide devices
+    // [LAB3 SCC] 初始化swap_manager（完成页面替换过程的主要功能模块）
     swap_init();                // init swap
 
     clock_init();               // init clock interrupt
