@@ -516,7 +516,7 @@ load_icode(unsigned char *binary, size_t size) {
     int ret = -E_NO_MEM;
     struct mm_struct *mm;
     //(1) create a new mm for current process
-    // [LAB5 SCC] 创建一个mm
+    // [LAB5 SCC] 为该进程创建一个mm
     if ((mm = mm_create()) == NULL) {
         goto bad_mm;
     }
@@ -686,6 +686,7 @@ do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
     }
     int ret;
 
+    // [LAB5 SCC] load_icode给用户进程建立一个能够让用户进程正常运行的用户环境
     if ((ret = load_icode(binary, size)) != 0) {
         goto execve_exit;
     }
@@ -786,6 +787,7 @@ do_kill(int pid) {
 
 // kernel_execve - do SYS_exec syscall to exec a user program called by user_main kernel_thread
 // [LAB5 SCC] 系统调用用户进程
+//             binary: 代码起始位置，size: 代码大小
 static int
 kernel_execve(const char *name, unsigned char *binary, size_t size) {
     int ret, len = strlen(name);

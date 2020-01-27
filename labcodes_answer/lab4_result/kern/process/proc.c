@@ -391,7 +391,7 @@ init_main(void *arg) {
 
 // proc_init - set up the first kernel thread idleproc "idle" by itself and 
 //           - create the second kernel thread init_main
-// [LAB4 SCC] 创建第0个内核线程Idel，并创建第二个内核线程init_main
+// [LAB4 SCC] 创建第0个内核线程Idel，并创建第1个内核线程init_main
 void
 proc_init(void) {
     int i;
@@ -401,7 +401,7 @@ proc_init(void) {
     for (i = 0; i < HASH_LIST_SIZE; i ++) {
         list_init(hash_list + i);
     }
-    // [LAB4 SCC] 给空闲进程分配内存空间
+    // [LAB4 SCC] 给空闲进程分配PCB内存空间
     if ((idleproc = alloc_proc()) == NULL) {
         panic("cannot alloc idleproc.\n");
     }
