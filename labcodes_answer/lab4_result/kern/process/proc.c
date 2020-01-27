@@ -236,6 +236,7 @@ int
 kernel_thread(int (*fn)(void *), void *arg, uint32_t clone_flags) {
     struct trapframe tf;
     memset(&tf, 0, sizeof(struct trapframe));
+    // [LAB4 SCC] 内核优先级
     tf.tf_cs = KERNEL_CS;
     tf.tf_ds = tf.tf_es = tf.tf_ss = KERNEL_DS;
     tf.tf_regs.reg_ebx = (uint32_t)fn;
@@ -331,7 +332,7 @@ do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
 
     proc->parent = current;
 
-    // [LAB4 SCC] 设置内核堆栈
+    // [LAB4 SCC] 设置内核堆栈, 大小为KSTACKPAGE
     if (setup_kstack(proc) != 0) {
         goto bad_fork_cleanup_proc;
     }
@@ -417,7 +418,7 @@ proc_init(void) {
     // [LAB4 SCC] 设置空闲任务为current 任务，在cpu_idle中调用
     current = idleproc;
     // [LAB4 SCC] 创建内核进程init_main，打印信息
-    //       包括tf设置、
+    //       包括tf设置、fork
     int pid = kernel_thread(init_main, "Hello world!!", 0);
     if (pid <= 0) {
         panic("create init_main failed.\n");
