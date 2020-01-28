@@ -544,6 +544,7 @@ load_icode(unsigned char *binary, size_t size) {
     struct proghdr *ph_end = ph + elf->e_phnum;
     for (; ph < ph_end; ph ++) {
     //(3.4) find every program section headers
+    // [LAB5 SCC] 找到代码的每个段的头
         if (ph->p_type != ELF_PT_LOAD) {
             continue ;
         }
@@ -555,6 +556,7 @@ load_icode(unsigned char *binary, size_t size) {
             continue ;
         }
     //(3.5) call mm_map fun to setup the new vma ( ph->p_va, ph->p_memsz)
+    // [LAB5 SCC] 根据每个段（代码段、数据段、BSS段等）的起始位置和大小建立对应的vma结构，并将vma插入到mm
         vm_flags = 0, perm = PTE_U;
         if (ph->p_flags & ELF_PF_X) vm_flags |= VM_EXEC;
         if (ph->p_flags & ELF_PF_W) vm_flags |= VM_WRITE;
@@ -572,6 +574,7 @@ load_icode(unsigned char *binary, size_t size) {
      //(3.6) alloc memory, and  copy the contents of every program section (from, from+end) to process's memory (la, la+end)
         end = ph->p_va + ph->p_filesz;
      //(3.6.1) copy TEXT/DATA section of bianry program
+     // [LAB5 SCC] 拷贝代码段和数据段，建立物理地址和虚拟地址的映射关系
         while (start < end) {
             if ((page = pgdir_alloc_page(mm->pgdir, la, perm)) == NULL) {
                 goto bad_cleanup_mmap;
@@ -612,10 +615,13 @@ load_icode(unsigned char *binary, size_t size) {
         }
     }
     //(4) build user stack memory
+    // [LAB5 SCC] 建立用户栈内存的vma结构，标记为可读可写而且是堆栈
     vm_flags = VM_READ | VM_WRITE | VM_STACK;
+    // [LAB5 SCC] 栈空间为256个page
     if ((ret = mm_map(mm, USTACKTOP - USTACKSIZE, USTACKSIZE, vm_flags, NULL)) != 0) {
         goto bad_cleanup_mmap;
     }
+    // [LAB5 SCC] USTACKTOP-PGSIZE参数是线性地址，分配物理地址空间，建立线性地址和物理地址的映射关系
     assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-PGSIZE , PTE_USER) != NULL);
     assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-2*PGSIZE , PTE_USER) != NULL);
     assert(pgdir_alloc_page(mm->pgdir, USTACKTOP-3*PGSIZE , PTE_USER) != NULL);
@@ -624,6 +630,7 @@ load_icode(unsigned char *binary, size_t size) {
     //(5) set current process's mm, sr3, and set CR3 reg = physical addr of Page Directory
     mm_count_inc(mm);
     current->mm = mm;
+    // [LAB5 SCC] 页目录表的起始地址
     current->cr3 = PADDR(mm->pgdir);
     lcr3(PADDR(mm->pgdir));
 
@@ -663,6 +670,8 @@ bad_mm:
 int
 do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
     struct mm_struct *mm = current->mm;
+    // [LAB5 SCC] 显示当前的运行进程
+    cprintf("[do_execve ] current : %s, current->mm(ptr) : %d",current->name, current->mm);
     if (!user_mem_check(mm, (uintptr_t)name, len, 0)) {
         return -E_INVAL;
     }
@@ -675,8 +684,9 @@ do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
     memcpy(local_name, name, len);
 
     // [LAB5 SCC] 删除原来的内存空间
+    // [LAB5 SCC] 如果是内核进程则mm是NULL
     if (mm != NULL) {
-        lcr3(boot_cr3);
+        lcr3(boot_cr3); // [LAB5 SCC] 设置为内核空间页表
         if (mm_count_dec(mm) == 0) {
             exit_mmap(mm);
             put_pgdir(mm);

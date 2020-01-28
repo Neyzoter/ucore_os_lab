@@ -180,6 +180,7 @@ mm_map(struct mm_struct *mm, uintptr_t addr, size_t len, uint32_t vm_flags,
     if ((vma = vma_create(start, end, vm_flags)) == NULL) {
         goto out;
     }
+    // [LAB5 SCC] vma插入到mm
     insert_vma_struct(mm, vma);
     if (vma_store != NULL) {
         *vma_store = vma;

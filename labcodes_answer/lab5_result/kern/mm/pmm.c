@@ -555,6 +555,7 @@ page_remove(pde_t *pgdir, uintptr_t la) {
 //note: PT is changed, so the TLB need to be invalidate 
 int
 page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm) {
+    // [LAB5 SCC] 获取一个页表项，可以对应到一个page
     pte_t *ptep = get_pte(pgdir, la, 1);
     if (ptep == NULL) {
         return -E_NO_MEM;
@@ -569,6 +570,7 @@ page_insert(pde_t *pgdir, struct Page *page, uintptr_t la, uint32_t perm) {
             page_remove_pte(pgdir, la, ptep);
         }
     }
+    // [LAB5 SCC] 页表项指向一个物理page
     *ptep = page2pa(page) | PTE_P | perm;
     tlb_invalidate(pgdir, la);
     return 0;
