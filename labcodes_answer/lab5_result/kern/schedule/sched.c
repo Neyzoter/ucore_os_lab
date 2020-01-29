@@ -26,6 +26,7 @@ schedule(void) {
     bool intr_flag;
     list_entry_t *le, *last;
     struct proc_struct *next = NULL;
+    cprintf("current : %s\n",current->name);
     local_intr_save(intr_flag);
     {
         current->need_resched = 0;
@@ -34,11 +35,14 @@ schedule(void) {
         do {
             if ((le = list_next(le)) != &proc_list) {
                 next = le2proc(le, list_link);
+                    
                 if (next->state == PROC_RUNNABLE) {
                     break;
                 }
             }
         } while (le != last);
+        cprintf("next : %s\n",next->name);
+        cprintf("runs : %d\n",current->runs);
         if (next == NULL || next->state != PROC_RUNNABLE) {
             next = idleproc;
         }

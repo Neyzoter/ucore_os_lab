@@ -856,6 +856,8 @@ init_main(void *arg) {
     if (pid <= 0) {
         panic("create user_main failed.\n");
     }
+    // [LAB5 SCC] 修复没有给进程设置名字
+    set_proc_name(find_proc(pid), "user_main");
 
     while (do_wait(0, NULL) == 0) {
         schedule();
@@ -911,6 +913,7 @@ proc_init(void) {
 // cpu_idle - at the end of kern_init, the first kernel thread idleproc will do below works
 void
 cpu_idle(void) {
+
     while (1) {
         if (current->need_resched) {
             schedule();
