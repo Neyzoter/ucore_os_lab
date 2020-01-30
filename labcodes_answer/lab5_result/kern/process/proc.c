@@ -700,6 +700,7 @@ do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
     if ((ret = load_icode(binary, size)) != 0) {
         goto execve_exit;
     }
+    cprintf("[do_execve] current : %s, current->mm(ptr) : %d\n",current->name, current->mm);
     set_proc_name(current, local_name);
     return 0;
 
