@@ -26,7 +26,7 @@ schedule(void) {
     bool intr_flag;
     list_entry_t *le, *last;
     struct proc_struct *next = NULL;
-    cprintf("current : %s\n",current->name);
+    cprintf("current : %s   pid : %d\n",current->name,current->pid);
     local_intr_save(intr_flag);
     {
         current->need_resched = 0;
@@ -41,8 +41,8 @@ schedule(void) {
                 }
             }
         } while (le != last);
-        cprintf("next : %s\n",next->name);
-        cprintf("runs : %d\n",current->runs);
+        // cprintf("next : %s\n",next->name);
+        // cprintf("runs : %d\n",current->runs);
         if (next == NULL || next->state != PROC_RUNNABLE) {
             next = idleproc;
         }

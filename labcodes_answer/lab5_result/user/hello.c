@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <ulib.h>
 
+extern struct proc_struct *current;
 int
 main(void) {
     cprintf("Hello world!!.\n");

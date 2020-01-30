@@ -671,7 +671,7 @@ int
 do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
     struct mm_struct *mm = current->mm;
     // [LAB5 SCC] 显示当前的运行进程
-    cprintf("[do_execve] current : %s, current->mm(ptr) : %d\n",current->name, current->mm);
+    cprintf("[do_execve] current : %s, pid : %d\n",current->name, current->pid);
     if (!user_mem_check(mm, (uintptr_t)name, len, 0)) {
         return -E_INVAL;
     }
@@ -700,7 +700,6 @@ do_execve(const char *name, size_t len, unsigned char *binary, size_t size) {
     if ((ret = load_icode(binary, size)) != 0) {
         goto execve_exit;
     }
-    cprintf("[do_execve] current : %s, current->mm(ptr) : %d\n",current->name, current->mm);
     set_proc_name(current, local_name);
     return 0;
 
