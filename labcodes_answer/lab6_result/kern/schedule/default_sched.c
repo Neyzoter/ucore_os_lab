@@ -65,6 +65,7 @@ stride_enqueue(struct run_queue *rq, struct proc_struct *proc) {
      assert(list_empty(&(proc->run_link)));
      list_add_before(&(rq->run_list), &(proc->run_link));
 #endif
+     // [LAB6 SCC] 时间窗口设置
      if (proc->time_slice == 0 || proc->time_slice > rq->max_time_slice) {
           proc->time_slice = rq->max_time_slice;
      }
@@ -152,6 +153,7 @@ stride_proc_tick(struct run_queue *rq, struct proc_struct *proc) {
      }
 }
 
+// [LAB6 SCC] 默认的调度类
 struct sched_class default_sched_class = {
      .name = "stride_scheduler",
      .init = stride_init,

@@ -886,6 +886,7 @@ proc_init(void) {
 void
 cpu_idle(void) {
     while (1) {
+        // [LAB6 SCC] 进程需要调度，该标志位周期性的设置为1
         if (current->need_resched) {
             schedule();
         }
