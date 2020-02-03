@@ -108,4 +108,3 @@ schedule(void) {
     }
     local_intr_restore(intr_flag);
 }
-
